@@ -1,0 +1,44 @@
+# ─── Dependencies ────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+
+# ─── Build outputs ───────────────────────────
+dist/
+build/
+client/dist/
+
+# ─── Environment ─────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ─── Prisma ──────────────────────────────────
+server/prisma/migrations/*.sql
+
+# ─── Logs ────────────────────────────────────
+*.log
+logs/
+npm-debug.log*
+
+# ─── OS ──────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── IDE ─────────────────────────────────────
+.vscode/settings.json
+.idea/
+
+# ─── Docker ──────────────────────────────────
+qdrant_storage/
+postgres_data/
+
+# ─── Misc ────────────────────────────────────
+*.tsbuildinfo
+.turbo
+
+# ─── Documentation & Scratch Files ────────────
+PROJECT_DOCUMENTATION.md
+CodeSage_Complete_Manual.pdf
+server/scratch/
+server/test_github.js

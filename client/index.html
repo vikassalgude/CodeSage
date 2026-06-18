@@ -1,0 +1,84 @@
+<!doctype html>
+<html class="dark" lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CodeSage — AI Codebase RAG Assistant</title>
+    <!-- Google Fonts & Material Symbols -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <!-- Tailwind CDN with forms and container-queries -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "background": "#131313",
+              "on-background": "#e5e2e1",
+              "surface": "#131313",
+              "on-surface": "#e5e2e1",
+              "surface-bright": "#393939",
+              "surface-dim": "#131313",
+              "surface-container": "#201f1f",
+              "surface-container-low": "#1c1b1b",
+              "surface-container-lowest": "#0e0e0e",
+              "surface-container-high": "#2a2a2a",
+              "surface-container-highest": "#353535",
+              "on-surface-variant": "#c4c7c8",
+              "outline": "#8e9192",
+              "outline-variant": "#444748",
+              "primary": "#ffffff",
+              "on-primary": "#2f3131",
+              "primary-container": "#e2e2e2",
+              "on-primary-container": "#636565",
+              "secondary": "#c8c6c6",
+              "on-secondary": "#303030",
+              "secondary-container": "#474747",
+              "on-secondary-container": "#b6b5b4",
+              "tertiary": "#ffffff",
+              "on-tertiary": "#1000a9",
+              "tertiary-container": "#e1e0ff",
+              "on-tertiary-container": "#4f51dd",
+              "error": "#ffb4ab",
+              "on-error": "#690005",
+              "error-container": "#93000a",
+              "on-error-container": "#ffdad6"
+            },
+            borderRadius: {
+              "DEFAULT": "0.25rem",
+              "lg": "0.5rem",
+              "xl": "0.75rem",
+              "full": "9999px"
+            },
+            spacing: {
+              "gutter": "12px",
+              "unit": "4px",
+              "container-padding": "24px",
+              "card-gap": "16px",
+              "sidebar-width": "260px"
+            },
+            fontFamily: {
+              "code-base": ["JetBrains Mono", "monospace"],
+              "headline-md": ["Hanken Grotesk", "sans-serif"],
+              "body-base": ["Inter", "sans-serif"],
+              "label-caps": ["JetBrains Mono", "monospace"],
+              "display-lg": ["Hanken Grotesk", "sans-serif"],
+              "headline-sm": ["Hanken Grotesk", "sans-serif"],
+              "body-sm": ["Inter", "sans-serif"]
+            }
+          }
+        }
+      }
+    </script>
+    <meta name="description" content="Production-ready codebase retrieval augmented generation assistant. Navigate files, read structures, and query code with citations." />
+  </head>
+  <body class="bg-background text-on-background antialiased font-body-base">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

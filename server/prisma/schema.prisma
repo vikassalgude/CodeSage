@@ -1,0 +1,124 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Enums – core business states
+enum Plan {
+  FREE
+  FREE_TRIAL
+  PRO
+  ENTERPRISE
+}
+
+enum RepoStatus {
+  INDEXING
+  READY
+  FAILED
+}
+
+enum Language {
+  JAVASCRIPT
+  TYPESCRIPT
+  PYTHON
+  RUBY
+  UNKNOWN
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+}
+
+// MODELS – with indexes, explicit DB types, and snake_case mapping
+model User {
+  id           String   @id @default(uuid()) @map("id")
+  email        String   @unique @db.VarChar(255) @map("email")
+  passwordHash String?  @db.VarChar(255) @map("password_hash")
+  githubToken  String?  @db.VarChar(255) @map("github_token")
+  plan         Plan     @default(FREE) @map("plan")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  repos        Repo[]   @relation("UserRepos")
+  conversations Conversation[] @relation("UserConversations")
+
+  @@map("users")
+}
+
+model Repo {
+  id          String        @id @default(uuid()) @map("id")
+  userId      String        @map("user_id")
+  githubUrl   String        @db.Text @map("github_url")
+  name        String        @db.VarChar(255) @map("name")
+  language    Language?    @default(UNKNOWN) @map("language")
+  status      RepoStatus    @default(INDEXING) @map("status")
+  chunkCount  Int           @default(0) @map("chunk_count")
+  commitSha   String?       @db.VarChar(40) @map("commit_sha")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  user        User          @relation("UserRepos", fields: [userId], references: [id], onDelete: Cascade)
+  chunks      Chunk[]       @relation("RepoChunks")
+  conversations Conversation[] @relation("RepoConversations")
+
+  // Indexes & Constraints
+  @@unique([userId, githubUrl])               // prevent duplicate repo per user
+  @@index([userId])                           // fast lookup of a user's repos
+  @@index([githubUrl])                        // optional – useful for external look‑ups
+  @@map("repos")
+}
+
+model Chunk {
+  id        String   @id @default(uuid()) @map("id")
+  repoId    String   @map("repo_id")
+  filePath  String   @db.Text @map("file_path")
+  startLine Int      @map("start_line")
+  endLine   Int      @map("end_line")
+  language  Language @map("language")
+  qdrantId  String   @unique @db.VarChar(255) @map("qdrant_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  repo      Repo     @relation("RepoChunks", fields: [repoId], references: [id], onDelete: Cascade)
+
+  // Indexes
+  @@index([repoId])                                   // repo → chunks
+  @@index([repoId, filePath, startLine])              // fast lookup of a file region
+  @@map("chunks")
+}
+
+model Conversation {
+  id        String   @id @default(uuid()) @map("id")
+  userId    String   @map("user_id")
+  repoId    String   @map("repo_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation("UserConversations", fields: [userId], references: [id], onDelete: Cascade)
+  repo      Repo     @relation("RepoConversations", fields: [repoId], references: [id], onDelete: Cascade)
+  messages  Message[] @relation("ConversationMessages")
+
+  // Indexes
+  @@index([userId])                          // find all conversations of a user
+  @@index([repoId])                          // find all conversations of a repo
+  @@index([userId, repoId])                  // common filter (user‑repo)
+  @@map("conversations")
+}
+
+model Message {
+  id             String       @id @default(uuid()) @map("id")
+  conversationId String       @map("conversation_id")
+  role           MessageRole  @map("role")
+  content        String       @db.Text @map("content")
+  citations      Json?        @db.JsonB @map("citations")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  conversation   Conversation @relation("ConversationMessages", fields: [conversationId], references: [id], onDelete: Cascade)
+
+  // Indexes
+  @@index([conversationId])                 // fetch messages for a conversation
+  @@index([conversationId, createdAt])      // pagination / ordering
+  @@index([conversationId, role])          // filter by role (assistant / user)
+  @@map("messages")
+}
