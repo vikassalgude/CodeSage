@@ -7,8 +7,10 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "dev:worker": "node --watch src/worker.js",
+    "build": "prisma generate",
     "start": "node src/server.js",
     "start:worker": "node src/worker.js",
+    "start:production": "node src/server.js & node src/worker.js",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
