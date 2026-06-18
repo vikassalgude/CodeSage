@@ -15,7 +15,10 @@ app.use(helmet());
 
 // Configure CORS
 app.use(cors({
-  origin: '*', // Restrict to front-end domain in production if needed
+  origin: [
+    'http://localhost:5173', 
+    'https://code-sage-ruddy-theta.vercel.app'
+  ], // Restrict to front-end domain in production if needed
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
