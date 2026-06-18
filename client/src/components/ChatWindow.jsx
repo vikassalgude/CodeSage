@@ -141,7 +141,7 @@ export default function ChatWindow({
               {m.role === 'user' ? (
                 <p className="whitespace-pre-wrap">{m.content}</p>
               ) : (
-                <Markdown content={m.content} />
+                <Markdown content={m.content} onSelectCitation={onSelectCitation} />
               )}
             </div>
 

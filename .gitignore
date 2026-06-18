@@ -39,6 +39,7 @@ postgres_data/
 
 # ─── Documentation & Scratch Files ────────────
 PROJECT_DOCUMENTATION.md
+DEPLOYMENT.md
 CodeSage_Complete_Manual.pdf
 server/scratch/
 server/test_github.js
