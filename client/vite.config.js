@@ -29,16 +29,36 @@
 //     }
 //   }
 // });
-import { defineConfig } from 'vite'
+// import { defineConfig } from 'vite'
+// import react from '@vitejs/plugin-react'
+
+// export default defineConfig({
+//   plugins: [react()],
+//   server: {
+//     proxy: {
+//       '/api': {
+//         target: 'http://localhost:3002',
+//         changeOrigin: true,
+//       }
+//     }
+//   }
+// })
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3002',
-        changeOrigin: true,
+export default defineConfig(({ mode }) => {
+  // Yeh line aapke .env.local aur Vercel ke variables ko load karegi
+  const env = loadEnv(mode, process.cwd(), '')
+
+  return {
+    plugins: [react()],
+    server: {
+      proxy: {
+        '/api': {
+          // Live build me Vercel ka URL lega, laptop par localhost lega
+          target: env.VITE_API_URL || 'http://localhost:3002',
+          changeOrigin: true,
+        }
       }
     }
   }
