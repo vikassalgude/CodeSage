@@ -31,13 +31,16 @@ export async function registerRepo(req, res, next) {
     }
 
     // Fetch repo metadata from GitHub
-    const { name, language, commitSha, size } = await getRepoDetails(githubUrl);
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    const userToken = user?.githubToken;
+    const { name, language, commitSha, size } = await getRepoDetails(githubUrl, userToken);
 
-    // Limit repository size to 50MB (50,000 KB) for free tier stability
-    const MAX_REPO_SIZE_KB = 50000;
+    // Relax raw repo size limit to 500MB to allow repos with heavy git history or media,
+    // while the worker enforces a strict 50MB limit only on actual source code files.
+    const MAX_REPO_SIZE_KB = 500000;
     if (size > MAX_REPO_SIZE_KB) {
       return res.status(400).json({
-        error: { message: `Repository is too large (${Math.round(size / 1024)}MB). The free tier limit is 50MB.` }
+        error: { message: `Repository is too large (${Math.round(size / 1024)}MB). The limit for raw repository size is 500MB.` }
       });
     }
 
@@ -82,7 +85,8 @@ export async function listRepos(req, res, next) {
       orderBy: { createdAt: 'desc' },
       select: {
         id: true, name: true, githubUrl: true, language: true,
-        status: true, chunkCount: true, createdAt: true
+        status: true, chunkCount: true, createdAt: true,
+        processedFiles: true, totalFiles: true
       }
     });
     const mapped = repos.map(r => ({
@@ -204,7 +208,8 @@ export async function getFileContent(req, res, next) {
     }
 
     logger.info(`Webhook: Fetching raw content for file '${filePath}' in repo '${repo.name}'`);
-    const content = await fetchFileContent(repo.githubUrl, filePath);
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    const content = await fetchFileContent(repo.githubUrl, filePath, user?.githubToken);
     res.json({ content });
   } catch (err) {
     next(err);

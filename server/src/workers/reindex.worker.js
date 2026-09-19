@@ -19,7 +19,7 @@ export const reindexWorker = new Worker('reindex', async (job) => {
   }
 }, {
   connection: redis,
-  concurrency: 2 // Process up to 2 re-index jobs in parallel
+  concurrency: 1 // Process up to 1 re-index jobs in parallel
 });
 
 reindexWorker.on('failed', (job, err) => {

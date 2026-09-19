@@ -1,9 +1,10 @@
 import React from 'react';
-import { FileCode, ArrowUpRight } from 'lucide-react';
+import { FileCode, FileText, ArrowUpRight } from 'lucide-react';
 
 export default function CitationCard({ citation, onSelectCitation, index }) {
   const { filePath, startLine, endLine } = citation;
   const fileName = filePath.split('/').pop();
+  const isDoc = citation.sourceType === 'documentation';
 
   return (
     <div 
@@ -28,8 +29,14 @@ export default function CitationCard({ citation, onSelectCitation, index }) {
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)' }}>
-          <FileCode size={14} style={{ color: 'var(--accent-secondary)' }} />
-          <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{fileName}</span>
+          {isDoc ? (
+            <FileText size={14} style={{ color: '#38bdf8' }} />
+          ) : (
+            <FileCode size={14} style={{ color: 'var(--accent-secondary)' }} />
+          )}
+          <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+            {isDoc ? `[Doc] ${fileName}` : fileName}
+          </span>
         </div>
         <div style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '2px' }}>
           <span style={{ fontSize: '0.75rem' }}>[{index + 1}]</span>

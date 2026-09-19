@@ -51,6 +51,7 @@ export async function embedAndStore(repoId, chunks) {
           language: chunk.language || 'unknown',
           content: chunk.content,
           type: chunk.type || 'block',
+          sourceType: chunk.sourceType || 'code',
         }
       }));
 

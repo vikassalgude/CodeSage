@@ -185,7 +185,7 @@ export async function queryController(req, res, next) {
   if (!repo) {
     return res.status(404).json({ error: { message: 'Repository not found' } });
   }
-  if (repo.status.toUpperCase() !== 'READY') {
+  if (repo.status.toUpperCase() !== 'READY' && repo.status.toUpperCase() !== 'PARTIALLY_READY') {
     return res.status(400).json({ error: { message: `Repository is not ready for queries. Current status: ${repo.status.toLowerCase()}` } });
   }
 
@@ -228,7 +228,8 @@ export async function queryController(req, res, next) {
         filePath: ctx.filePath,
         startLine: ctx.startLine,
         endLine: ctx.endLine,
-        language: ctx.language
+        language: ctx.language,
+        sourceType: ctx.sourceType
       }));
       res.write(`event: citations\ndata: ${JSON.stringify({ citations })}\n\n`);
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, Folder, Database, Settings, LogOut, Terminal, ArrowRight, Check, AlertTriangle, Key, Shield, FolderGit2 } from 'lucide-react';
+import { Loader2, Folder, Database, Settings, LogOut, Terminal, ArrowRight, Check, AlertTriangle, Key, Shield, FolderGit2, Trash2 } from 'lucide-react';
 
-export default function Dashboard({ user, repos, onAddRepo, onSelectRepo, onLogout }) {
+export default function Dashboard({ user, repos, onAddRepo, onDeleteRepo, onSelectRepo, onLogout }) {
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard', 'my-repos', 'conversations', 'settings'
   const [newRepoUrl, setNewRepoUrl] = useState('');
   const [registering, setRegistering] = useState(false);
@@ -138,7 +138,7 @@ export default function Dashboard({ user, repos, onAddRepo, onSelectRepo, onLogo
   };
 
   // Calculations
-  const readyRepos = repos.filter(r => r.status === 'ready').length;
+  const readyRepos = repos.filter(r => r.status === 'ready' || r.status === 'partially_ready').length;
   const totalChunks = repos.reduce((sum, r) => sum + (r.chunkCount || 0), 0);
   const userDisplayName = user?.email ? user.email.split('@')[0] : 'Developer';
 
@@ -368,6 +368,19 @@ export default function Dashboard({ user, repos, onAddRepo, onSelectRepo, onLogo
                                 <span>Chat</span>
                               </button>
                             </>
+                          ) : repo.status === 'partially_ready' ? (
+                            <>
+                              <span className="px-2.5 py-0.5 rounded bg-[#132832] text-[#38bdf8] font-code-base text-[9.5px] font-bold border border-[#38bdf8]/20 uppercase tracking-wider animate-pulse" title={`${repo.processedFiles || 0}/${repo.totalFiles || 0} files indexed`}>
+                                Partially Ready ({repo.processedFiles || 0}/{repo.totalFiles || 0})
+                              </span>
+                              <button 
+                                onClick={() => onSelectRepo(repo)}
+                                className="flex items-center gap-1.5 border border-outline-variant hover:border-[#8b5cf6] hover:bg-[#8b5cf6]/5 px-4 py-2 rounded-lg text-[12.5px] text-[#a78bfa] font-medium transition-colors bg-background active:scale-[0.98] cursor-pointer"
+                              >
+                                <span className="material-symbols-outlined text-[16px]">chat_bubble</span>
+                                <span>Chat</span>
+                              </button>
+                            </>
                           ) : repo.status === 'failed' ? (
                             <>
                               <span className="px-2.5 py-0.5 rounded bg-red-950/30 text-red-400 font-code-base text-[9.5px] font-bold border border-red-500/20 uppercase tracking-wider">Failed</span>
@@ -381,7 +394,9 @@ export default function Dashboard({ user, repos, onAddRepo, onSelectRepo, onLogo
                             </>
                           ) : (
                             <>
-                              <span className="px-2.5 py-0.5 rounded bg-[#2a2015] text-[#facc15] font-code-base text-[9.5px] font-bold border border-[#facc15]/20 uppercase tracking-wider animate-pulse">Indexing</span>
+                              <span className="px-2.5 py-0.5 rounded bg-[#2a2015] text-[#facc15] font-code-base text-[9.5px] font-bold border border-[#facc15]/20 uppercase tracking-wider animate-pulse">
+                                Indexing {repo.totalFiles > 0 ? `(${repo.processedFiles || 0}/${repo.totalFiles})` : ''}
+                              </span>
                               <button 
                                 disabled
                                 className="opacity-60 cursor-not-allowed flex items-center gap-1.5 border border-outline-variant px-4 py-2 rounded-lg text-[12.5px] text-outline-variant bg-background"
@@ -391,6 +406,17 @@ export default function Dashboard({ user, repos, onAddRepo, onSelectRepo, onLogo
                               </button>
                             </>
                           )}
+                          <button 
+                            onClick={() => {
+                              if (confirm(`Are you sure you want to delete the repository "${repo.name}"? This will permanently delete all indexed chunks and conversation histories.`)) {
+                                onDeleteRepo(repo.id);
+                              }
+                            }}
+                            className="flex items-center justify-center p-2.5 border border-outline-variant hover:border-red-500/50 hover:bg-red-500/10 text-outline-variant hover:text-red-400 rounded-lg transition-colors bg-background active:scale-[0.98] cursor-pointer"
+                            title="Delete indexed repository"
+                          >
+                            <Trash2 size={14} />
+                          </button>
                         </div>
                       </div>
                     ))

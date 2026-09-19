@@ -76,6 +76,24 @@ export default function App() {
     }
   }
 
+  async function handleDeleteRepo(id) {
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`/api/repos/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error?.message || 'Failed to delete repository');
+      }
+      await fetchRepos();
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  }
+
   function handleLogout() { 
     localStorage.clear(); 
     setUser(null); 
@@ -138,6 +156,7 @@ export default function App() {
       user={user}
       repos={repos}
       onAddRepo={handleAddRepo}
+      onDeleteRepo={handleDeleteRepo}
       onSelectRepo={(repo, conversationId = null) => {
         setSelectedRepo(repo);
         setActiveConversationId(conversationId);

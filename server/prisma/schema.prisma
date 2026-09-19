@@ -17,6 +17,7 @@ enum Plan {
 
 enum RepoStatus {
   INDEXING
+  PARTIALLY_READY
   READY
   FAILED
 }
@@ -50,19 +51,21 @@ model User {
 }
 
 model Repo {
-  id          String        @id @default(uuid()) @map("id")
-  userId      String        @map("user_id")
-  githubUrl   String        @db.Text @map("github_url")
-  name        String        @db.VarChar(255) @map("name")
-  language    Language?    @default(UNKNOWN) @map("language")
-  status      RepoStatus    @default(INDEXING) @map("status")
-  chunkCount  Int           @default(0) @map("chunk_count")
-  commitSha   String?       @db.VarChar(40) @map("commit_sha")
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
-  user        User          @relation("UserRepos", fields: [userId], references: [id], onDelete: Cascade)
-  chunks      Chunk[]       @relation("RepoChunks")
-  conversations Conversation[] @relation("RepoConversations")
+  id             String        @id @default(uuid()) @map("id")
+  userId         String        @map("user_id")
+  githubUrl      String        @db.Text @map("github_url")
+  name           String        @db.VarChar(255) @map("name")
+  language       Language?     @default(UNKNOWN) @map("language")
+  status         RepoStatus    @default(INDEXING) @map("status")
+  chunkCount     Int           @default(0) @map("chunk_count")
+  commitSha      String?       @db.VarChar(40) @map("commit_sha")
+  processedFiles Int           @default(0) @map("processed_files")
+  totalFiles     Int           @default(0) @map("total_files")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  user           User          @relation("UserRepos", fields: [userId], references: [id], onDelete: Cascade)
+  chunks         Chunk[]       @relation("RepoChunks")
+  conversations  Conversation[] @relation("RepoConversations")
 
   // Indexes & Constraints
   @@unique([userId, githubUrl])               // prevent duplicate repo per user

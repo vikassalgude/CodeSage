@@ -67,6 +67,7 @@ export async function searchCodebase(repoId, query, topK = 5) {
     startLine: result.payload.startLine,
     endLine: result.payload.endLine,
     language: result.payload.language,
+    sourceType: result.payload.sourceType || 'code',
     score: result.score
   }));
 }
