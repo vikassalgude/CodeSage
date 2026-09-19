@@ -148,6 +148,213 @@ flowchart TD
 
 ---
 
+## 🗄️ Database Design & Schema Architecture
+
+CodeSage employs a hybrid database strategy:
+1. **Relational Database (PostgreSQL + Prisma)**: Manages users, repo metadata, indexed chunk records, chat sessions, and message citations with strict integrity constraints.
+2. **Vector Database (Qdrant)**: Stores 384-dimensional dense vector embeddings with payload attributes (`sourceType`, `filePath`, `lines`) for high-speed similarity search.
+
+### 1. Entity-Relationship Diagram (PostgreSQL)
+
+```mermaid
+erDiagram
+    USER ||--o{ REPO : owns
+    USER ||--o{ CONVERSATION : conducts
+    REPO ||--o{ CHUNK : contains
+    REPO ||--o{ CONVERSATION : scopes
+    CONVERSATION ||--o{ MESSAGE : stores
+
+    USER {
+        string id PK
+        string email UK
+        string passwordHash
+        string githubToken
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    REPO {
+        string id PK
+        string userId FK
+        string githubUrl
+        string name
+        enum language
+        enum status
+        int chunkCount
+        int indexedFileCount
+        int totalFileCount
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    CHUNK {
+        string id PK
+        string repoId FK
+        string filePath
+        int startLine
+        int endLine
+        enum language
+        string qdrantId UK
+    }
+
+    CONVERSATION {
+        string id PK
+        string userId FK
+        string repoId FK
+        datetime createdAt
+    }
+
+    MESSAGE {
+        string id PK
+        string conversationId FK
+        enum role
+        string content
+        json citations
+        datetime createdAt
+    }
+```
+
+---
+
+### 2. Relational Schema Definition (`prisma/schema.prisma`)
+
+```prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum RepoStatus {
+  QUEUED
+  INDEXING
+  PARTIALLY_READY
+  READY
+  FAILED
+}
+
+enum Language {
+  JAVASCRIPT
+  TYPESCRIPT
+  PYTHON
+  RUBY
+  MARKDOWN
+  JSON
+  CSS
+  UNKNOWN
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+}
+
+model User {
+  id           String         @id @default(uuid())
+  email        String         @unique
+  passwordHash String?
+  githubToken  String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  repos        Repo[]
+  conversations Conversation[]
+}
+
+model Repo {
+  id               String        @id @default(uuid())
+  userId           String
+  githubUrl        String
+  name             String
+  language         Language?     @default(UNKNOWN)
+  status           RepoStatus    @default(QUEUED)
+  chunkCount       Int           @default(0)
+  indexedFileCount Int           @default(0)
+  totalFileCount   Int           @default(0)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chunks           Chunk[]
+  conversations    Conversation[]
+
+  @@unique([userId, githubUrl])
+}
+
+model Chunk {
+  id        String   @id @default(uuid())
+  repoId    String
+  filePath  String
+  startLine Int
+  endLine   Int
+  language  Language
+  qdrantId  String   @unique
+  repo      Repo     @relation(fields: [repoId], references: [id], onDelete: Cascade)
+
+  @@index([repoId])
+  @@index([repoId, filePath, startLine])
+}
+
+model Conversation {
+  id        String   @id @default(uuid())
+  userId    String
+  repoId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  repo      Repo     @relation(fields: [repoId], references: [id], onDelete: Cascade)
+  messages  Message[]
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  role           MessageRole
+  content        String
+  citations      Json?
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}
+```
+
+---
+
+### 3. Qdrant Vector Collection & Payload Schema
+
+Vector collections in Qdrant are named dynamically using the pattern `repo_${repoId}`.
+
+* **Vector Configuration**:
+  * **Dimensions**: 384 (matches `Xenova/all-MiniLM-L6-v2`)
+  * **Distance Metric**: Cosine Similarity
+  * **HNSW Index Parameters**: `m: 16`, `ef_construct: 100`
+
+* **Vector Point Payload Model**:
+```json
+{
+  "id": "c8f3b2d1-9401-4b1a-8212-e8d19a2b5e01",
+  "vector": [0.0142, -0.0521, 0.0891, "... (384 float dimensions)"],
+  "payload": {
+    "repoId": "6f2e8211-5d9c-482a-a23f-91a74d209123",
+    "filePath": "src/controllers/auth.controller.js",
+    "startLine": 15,
+    "endLine": 42,
+    "sourceType": "code", // 'code' or 'documentation'
+    "language": "javascript",
+    "code": "export const login = async (req, res) => {\n  const { email, password } = req.body;\n  ...\n}"
+  }
+}
+```
+
+---
+
+### 4. Cascade Deletion & Cleanup Mechanics
+
+When a repository is deleted by a user via `DELETE /api/repos/:id`:
+1. **PostgreSQL Transaction**: Foreign key cascade rules (`onDelete: Cascade`) automatically drop all associated `Chunk`, `Conversation`, and `Message` database rows instantly.
+2. **Qdrant Vector Cleanup**: The controller issues `qdrantClient.deleteCollection('repo_${repoId}')`, purging vector memory from local disk and RAM.
+
+---
+
 ## 🛠️ Technology Stack & Trade-Off Decisions
 
 | Component | Technology | Rationale & Trade-off Analysis |
